@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock,
   Video, Link as LinkIcon, FileText, Plus, Trash2, ExternalLink,
-  Sparkles, CheckCircle2, AlertCircle, Radio
+  Sparkles, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { ConfirmModal } from '../components/ConfirmModal';
