@@ -1,9 +1,9 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import {
   Plus, Edit2, Trash2, CheckCircle2, Loader2, Moon,
-  Sparkles, CheckSquare,
+  Sparkles, CheckSquare, Clock,
 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -11,7 +11,13 @@ import clsx from 'clsx';
 
 type TaskStatus = 'dormant' | 'in_progress' | 'completed';
 
-// ── Status config ──────────────────────────────────────────────────────────────
+// ── Status config & Priority Order ───────────────────────────────────────────
+const STATUS_ORDER: Record<TaskStatus, number> = {
+  dormant: 1,
+  in_progress: 2,
+  completed: 3,
+};
+
 const STATUS_CONFIG: Record<TaskStatus, {
   label: string;
   icon: React.ElementType;
@@ -42,6 +48,24 @@ const normalizeStatus = (status?: string): TaskStatus => {
   if (status === 'completed') return 'completed';
   if (status === 'in_progress') return 'in_progress';
   return 'dormant';
+};
+
+const formatRelativeTime = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSec < 45) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 export const Tasks = () => {
@@ -207,6 +231,25 @@ export const Tasks = () => {
   const totalCount      = activeMember?.tasks?.length ?? 0;
   const progressPct     = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
+  // Sort tasks: dormant first, in_progress next, completed last.
+  // Within each status group, sort by updatedAt ascendingly (most recently updated first).
+  const sortedTasks = useMemo(() => {
+    if (!activeMember?.tasks) return [];
+    return [...activeMember.tasks].sort((a: any, b: any) => {
+      const statusA: TaskStatus = normalizeStatus(a.status);
+      const statusB: TaskStatus = normalizeStatus(b.status);
+
+      // 1. Status order: dormant (1) -> in_progress (2) -> completed (3)
+      const diffStatus = STATUS_ORDER[statusA] - STATUS_ORDER[statusB];
+      if (diffStatus !== 0) return diffStatus;
+
+      // 2. Within each group: recently updated first (newest timestamp)
+      const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+  }, [activeMember?.tasks]);
+
   // ── Loading / empty states ──────────────────────────────────────────────────
   if (loading) {
     return (
@@ -367,7 +410,7 @@ export const Tasks = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeMember.tasks.map((task: any) => {
+              {sortedTasks.map((task: any) => {
                 const status: TaskStatus = normalizeStatus(task.status);
                 const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.dormant;
                 const isDone = status === 'completed';
@@ -447,8 +490,8 @@ export const Tasks = () => {
                           </div>
                         )}
 
-                        {/* Status badge */}
-                        <div className="mt-2.5 flex items-center gap-2">
+                        {/* Status badge & updated time */}
+                        <div className="mt-2.5 flex items-center gap-2.5 flex-wrap">
                           <span className={clsx(
                             'inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full',
                             cfg.pill
@@ -456,6 +499,13 @@ export const Tasks = () => {
                             <StatusIcon className={clsx('w-3 h-3', status === 'in_progress' && 'animate-spin')} />
                             {cfg.label}
                           </span>
+
+                          {(task.updatedAt || task.createdAt) && (
+                            <span className="text-[10px] font-medium text-[var(--color-text-muted)] flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-[var(--color-text-muted)]/70" />
+                              <span>Updated {formatRelativeTime(task.updatedAt || task.createdAt)}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
