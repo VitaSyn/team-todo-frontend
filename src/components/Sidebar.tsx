@@ -1,6 +1,6 @@
 import { useState, useContext, createContext, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CheckSquare, LogOut, MessageCircle, X } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, Calendar as CalendarIcon, LogOut, MessageCircle, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 // ── Sidebar open/close context ───────────────────────────────────────────────
@@ -101,6 +101,20 @@ const SidebarContent = ({ onNav }: { onNav?: () => void }) => {
                 className={`w-5 h-5 mr-3 shrink-0 transition-colors ${isActive ? "text-[var(--color-lavender)]" : "group-hover:text-[var(--color-lavender-light)]"}`}
               />
               <span>Tasks</span>
+              {isActive && (
+                <span className="ml-auto w-1.5 h-4 rounded-full bg-[var(--color-lavender)] shadow-[0_0_8px_var(--color-lavender)]" />
+              )}
+            </>
+          )}
+        </NavLink>
+
+        <NavLink to="/calendar" className={navLinkClass} onClick={onNav} data-testid="callender-tab" title="Calendar">
+          {({ isActive }) => (
+            <>
+              <CalendarIcon
+                className={`w-5 h-5 mr-3 shrink-0 transition-colors ${isActive ? "text-[var(--color-lavender)]" : "group-hover:text-[var(--color-lavender-light)]"}`}
+              />
+              <span>Calendar</span>
               {isActive && (
                 <span className="ml-auto w-1.5 h-4 rounded-full bg-[var(--color-lavender)] shadow-[0_0_8px_var(--color-lavender)]" />
               )}

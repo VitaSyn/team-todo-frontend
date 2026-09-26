@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Members } from './pages/Members';
 import { Tasks } from './pages/Tasks';
+import { Calendar } from './pages/Calendar';
 import { NotFound } from './pages/NotFound';
 
 const App = () => {
@@ -20,6 +21,8 @@ const App = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="members" element={<Members />} />
               <Route path="tasks" element={<Tasks />} />
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="callender" element={<Navigate to="/calendar" replace />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
